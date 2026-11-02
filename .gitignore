@@ -1,0 +1,11 @@
+.venv314/
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.env
+proto/shots/
+proto/*.json
+proto/ref/
+ref-core/
+proto/

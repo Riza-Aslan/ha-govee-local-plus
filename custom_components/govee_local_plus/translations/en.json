@@ -1,0 +1,52 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Govee Local Plus",
+        "description": "Scans the LAN for Govee lights with LAN control enabled (Govee Home app > device settings). Port 4002/UDP must be free: stop the Govee to MQTT bridge first."
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "Only one Govee Local Plus entry is needed, it covers every light.",
+      "no_devices_found": "No Govee light answered. Enable LAN control in the Govee Home app and check that nothing else holds UDP port 4002."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Custom segment effects",
+        "description": "Static colour layouts that are painted locally, one JSON object. Segments are 0-based. Example: {\"Signal-Rot\": {\"background\": [0,0,0], \"fills\": [{\"color\": [234,51,35], \"segments\": [10, 11]}]}}",
+        "data": {
+          "custom_effects": "Effects (JSON)"
+        }
+      }
+    },
+    "error": {
+      "invalid_effects": "Invalid effects: {error}"
+    }
+  },
+  "entity": {
+    "light": {
+      "govee_light": {
+        "name": "Light"
+      }
+    }
+  },
+  "exceptions": {
+    "bind_failed": {
+      "message": "Could not listen for Govee devices: {error}"
+    },
+    "no_devices_found": {
+      "message": "No Govee light found on the network"
+    },
+    "no_listening_addresses": {
+      "message": "No enabled network adapter has an IPv4 address to listen on"
+    },
+    "no_live_endpoints": {
+      "message": "Lost every network listener, reloading"
+    },
+    "port_in_use": {
+      "message": "Port {port} is already in use (the Govee to MQTT bridge or the built-in Govee integration?)"
+    }
+  }
+}

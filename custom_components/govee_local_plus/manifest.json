@@ -1,0 +1,13 @@
+{
+  "domain": "govee_local_plus",
+  "name": "Govee Local Plus",
+  "codeowners": ["@Riza-Aslan"],
+  "config_flow": true,
+  "dependencies": ["network"],
+  "documentation": "https://github.com/Riza-Aslan/ha-govee-local-plus",
+  "integration_type": "hub",
+  "iot_class": "local_push",
+  "issue_tracker": "https://github.com/Riza-Aslan/ha-govee-local-plus/issues",
+  "requirements": ["govee-local-api==3.3.1"],
+  "version": "0.1.0"
+}

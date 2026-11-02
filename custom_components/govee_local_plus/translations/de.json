@@ -1,0 +1,52 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Govee Local Plus",
+        "description": "Sucht im LAN nach Govee-Lampen mit aktivierter LAN-Steuerung (Govee Home App > Geräteeinstellungen). Port 4002/UDP muss frei sein: vorher die Govee-to-MQTT-Bridge stoppen."
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "Ein Eintrag genügt, er deckt alle Lampen ab.",
+      "no_devices_found": "Keine Govee-Lampe hat geantwortet. LAN-Steuerung in der Govee Home App aktivieren und prüfen, ob UDP-Port 4002 frei ist."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Eigene Segment-Effekte",
+        "description": "Feste Farbbilder, die lokal gemalt werden, ein JSON-Objekt. Segmente zählen ab 0. Beispiel: {\"Signal-Rot\": {\"background\": [0,0,0], \"fills\": [{\"color\": [234,51,35], \"segments\": [10, 11]}]}}",
+        "data": {
+          "custom_effects": "Effekte (JSON)"
+        }
+      }
+    },
+    "error": {
+      "invalid_effects": "Ungültige Effekte: {error}"
+    }
+  },
+  "entity": {
+    "light": {
+      "govee_light": {
+        "name": "Licht"
+      }
+    }
+  },
+  "exceptions": {
+    "bind_failed": {
+      "message": "Konnte nicht auf Govee-Geräte lauschen: {error}"
+    },
+    "no_devices_found": {
+      "message": "Keine Govee-Lampe im Netzwerk gefunden"
+    },
+    "no_listening_addresses": {
+      "message": "Kein aktiver Netzwerkadapter mit IPv4-Adresse"
+    },
+    "no_live_endpoints": {
+      "message": "Alle Netzwerk-Listener verloren, lade neu"
+    },
+    "port_in_use": {
+      "message": "Port {port} ist bereits belegt (Govee-to-MQTT-Bridge oder die eingebaute Govee-Integration?)"
+    }
+  }
+}
