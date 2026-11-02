@@ -15,7 +15,7 @@
     "step": {
       "init": {
         "title": "Eigene Segment-Effekte",
-        "description": "Feste Farbbilder, die lokal gemalt werden, ein JSON-Objekt. Segmente zählen ab 0. Beispiel: {\"Signal-Rot\": {\"background\": [0,0,0], \"fills\": [{\"color\": [234,51,35], \"segments\": [10, 11]}]}}",
+        "description": "Feste Farbbilder, die lokal gemalt werden, ein JSON-Objekt. Segmente zählen ab 0. Beispiel: {example}",
         "data": {
           "custom_effects": "Effekte (JSON)"
         }

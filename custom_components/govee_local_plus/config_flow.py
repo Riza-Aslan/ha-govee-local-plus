@@ -33,6 +33,11 @@ from .effects import EffectConfigError, parse_effects
 
 _LOGGER = logging.getLogger(__name__)
 
+EXAMPLE_EFFECTS = (
+    '{"Signal-Rot": {"background": [0, 0, 0], '
+    '"fills": [{"color": [234, 51, 35], "segments": [10, 11]}]}}'
+)
+
 
 async def _async_has_devices(hass: HomeAssistant) -> bool:
     """Return True if at least one light answers on the LAN."""
@@ -108,7 +113,7 @@ class GoveeLocalPlusOptionsFlow(OptionsFlow):
     ) -> ConfigFlowResult:
         """Show and validate the effects JSON."""
         errors: dict[str, str] = {}
-        placeholders: dict[str, str] = {}
+        placeholders: dict[str, str] = {"example": EXAMPLE_EFFECTS, "error": ""}
         if user_input is not None:
             try:
                 parse_effects(user_input.get(CONF_CUSTOM_EFFECTS))

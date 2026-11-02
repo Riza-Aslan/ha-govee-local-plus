@@ -1,2 +1,2 @@
 pytest-homeassistant-custom-component
-govee-local-api==3.3.1
+govee-local-api>=3.3.1

@@ -15,7 +15,7 @@
     "step": {
       "init": {
         "title": "Custom segment effects",
-        "description": "Static colour layouts that are painted locally, one JSON object. Segments are 0-based. Example: {\"Signal-Rot\": {\"background\": [0,0,0], \"fills\": [{\"color\": [234,51,35], \"segments\": [10, 11]}]}}",
+        "description": "Static colour layouts that are painted locally, one JSON object. Segments are 0-based. Example: {example}",
         "data": {
           "custom_effects": "Effects (JSON)"
         }
