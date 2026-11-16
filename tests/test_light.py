@@ -72,6 +72,7 @@ class FakeController:
     """Replaces GoveeController: returns one device, binds nothing."""
 
     device = FakeDevice()
+    last_queued: list[str] = []
 
     def __init__(self, **kwargs) -> None:
         self.protocols = [object()]
@@ -79,6 +80,12 @@ class FakeController:
         self.listening_addresses = ["10.0.0.2"]
         self.networks = ["10.0.0.0/24"]
         self.callback = None
+        self.queued: list[str] = []
+
+    def add_device_to_discovery_queue(self, ip: str) -> bool:
+        self.queued.append(ip)
+        FakeController.last_queued = self.queued
+        return True
 
     async def start(self, require_all=True) -> None:
         return None
@@ -297,3 +304,36 @@ async def test_h61e5_has_twelve_segments() -> None:
     caps = GOVEE_LIGHT_CAPABILITIES["H61E5"]
     assert caps.features & GoveeLightFeatures.SEGMENT_CONTROL
     assert caps.segments_count == 12
+
+
+async def test_configured_ips_are_asked_directly(hass: HomeAssistant, device: FakeDevice) -> None:
+    """Multicast may not arrive; a configured address is probed by unicast."""
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        unique_id=DOMAIN,
+        options={CONF_CUSTOM_EFFECTS: STAIRS, "device_ips": "10.0.0.40, 10.0.0.41\n10.0.0.40"},
+    )
+    entry.add_to_hass(hass)
+    FakeController.last_queued = []
+    with (
+        patch("custom_components.govee_local_plus.coordinator.GoveeController", FakeController),
+        patch(
+            "custom_components.govee_local_plus.async_get_listening_addresses",
+            AsyncMock(return_value=["10.0.0.2/24"]),
+        ),
+        patch(
+            "custom_components.govee_local_plus.catalog.SceneCatalog.async_get",
+            AsyncMock(return_value=LIBRARY),
+        ),
+    ):
+        assert await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+    assert FakeController.last_queued == ["10.0.0.40", "10.0.0.41"]
+
+
+async def test_options_flow_rejects_bad_ip(hass: HomeAssistant, setup) -> None:
+    result = await hass.config_entries.options.async_init(setup.entry_id)
+    bad = await hass.config_entries.options.async_configure(
+        result["flow_id"], {CONF_CUSTOM_EFFECTS: STAIRS, "device_ips": "10.0.0.999"}
+    )
+    assert bad["errors"] == {"base": "invalid_ips"}

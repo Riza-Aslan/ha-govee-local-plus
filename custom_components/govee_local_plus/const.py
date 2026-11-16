@@ -12,6 +12,7 @@ CONF_COMMAND_PORT = 4003
 CONF_DISCOVERY_INTERVAL_DEFAULT = 60
 
 CONF_CUSTOM_EFFECTS = "custom_effects"
+CONF_DEVICE_IPS = "device_ips"
 
 SCAN_INTERVAL = timedelta(seconds=30)
 # A device is considered unavailable if we have not heard a status response

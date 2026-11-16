@@ -15,14 +15,16 @@
     "step": {
       "init": {
         "title": "Eigene Segment-Effekte",
-        "description": "Feste Farbbilder, die lokal gemalt werden, ein JSON-Objekt. Segmente zählen ab 0. Beispiel: {example}",
+        "description": "Feste Farbbilder, die lokal gemalt werden, ein JSON-Objekt. Segmente zählen ab 0. Beispiel: {example} Optional: IP-Adressen der Lampen (kommagetrennt). Sie werden direkt angefragt, das hilft, wenn die Multicast-Suche sie nicht erreicht.",
         "data": {
-          "custom_effects": "Effekte (JSON)"
+          "custom_effects": "Effekte (JSON)",
+          "device_ips": "Adressen der Lampen (optional)"
         }
       }
     },
     "error": {
-      "invalid_effects": "Ungültige Effekte: {error}"
+      "invalid_effects": "Ungültige Effekte: {error}",
+      "invalid_ips": "Ungültige IP-Adresse: {error}"
     }
   },
   "entity": {

@@ -19,9 +19,10 @@ from homeassistant.config_entries import (
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.selector import TextSelector, TextSelectorConfig
 
-from . import async_get_listening_addresses
+from . import async_get_listening_addresses, parse_device_ips
 from .const import (
     CONF_CUSTOM_EFFECTS,
+    CONF_DEVICE_IPS,
     CONF_LISTENING_PORT_DEFAULT,
     CONF_MULTICAST_ADDRESS_DEFAULT,
     CONF_TARGET_PORT_DEFAULT,
@@ -121,13 +122,20 @@ class GoveeLocalPlusOptionsFlow(OptionsFlow):
                 errors["base"] = "invalid_effects"
                 placeholders["error"] = str(err)
             else:
-                return self.async_create_entry(data=user_input)
+                try:
+                    parse_device_ips(user_input.get(CONF_DEVICE_IPS))
+                except ValueError as err:
+                    errors["base"] = "invalid_ips"
+                    placeholders["error"] = str(err)
+                else:
+                    return self.async_create_entry(data=user_input)
 
         schema = vol.Schema(
             {
                 vol.Optional(CONF_CUSTOM_EFFECTS): TextSelector(
                     TextSelectorConfig(multiline=True)
-                )
+                ),
+                vol.Optional(CONF_DEVICE_IPS): TextSelector(),
             }
         )
         return self.async_show_form(

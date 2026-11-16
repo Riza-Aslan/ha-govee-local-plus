@@ -15,14 +15,16 @@
     "step": {
       "init": {
         "title": "Custom segment effects",
-        "description": "Static colour layouts that are painted locally, one JSON object. Segments are 0-based. Example: {example}",
+        "description": "Static colour layouts that are painted locally, one JSON object. Segments are 0-based. Example: {example} Optional: IP addresses of the lights (comma separated). They are asked directly, which helps when multicast discovery does not reach them.",
         "data": {
-          "custom_effects": "Effects (JSON)"
+          "custom_effects": "Effects (JSON)",
+          "device_ips": "Light addresses (optional)"
         }
       }
     },
     "error": {
-      "invalid_effects": "Invalid effects: {error}"
+      "invalid_effects": "Invalid effects: {error}",
+      "invalid_ips": "Invalid IP address: {error}"
     }
   },
   "entity": {

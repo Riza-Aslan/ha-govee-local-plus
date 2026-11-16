@@ -60,6 +60,7 @@ class GoveeLocalPlusCoordinator(DataUpdateCoordinator[list[GoveeDevice]]):
         config_entry: GoveeLocalPlusConfigEntry,
         listening_addresses: list[str],
         effects: dict[str, SegmentEffect],
+        device_ips: list[str] | None = None,
     ) -> None:
         """Initialize the coordinator."""
         super().__init__(
@@ -70,6 +71,7 @@ class GoveeLocalPlusCoordinator(DataUpdateCoordinator[list[GoveeDevice]]):
             update_interval=SCAN_INTERVAL,
         )
         self.effects = effects
+        self._device_ips = device_ips or []
         self.catalog = SceneCatalog(hass)
         self._controller = GoveeController(
             loop=hass.loop,
@@ -87,6 +89,10 @@ class GoveeLocalPlusCoordinator(DataUpdateCoordinator[list[GoveeDevice]]):
     async def start(self) -> None:
         """Bind the sockets and start discovery."""
         await self._controller.start(require_all=False)
+        # Multicast discovery is not always delivered (IGMP snooping, Wi-Fi
+        # multicast handling); lights with a known address are asked directly.
+        for ip in self._device_ips:
+            self._controller.add_device_to_discovery_queue(ip)
         self._controller.send_update_message()
         log_bound_addresses(self._controller)
 

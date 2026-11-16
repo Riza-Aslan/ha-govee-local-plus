@@ -26,6 +26,12 @@ cached copy or the few built-in scenes are used.
 UDP port **4002** must be free: remove or stop the built-in Govee light local integration and
 the Govee to MQTT bridge first, only one program can listen on it.
 
+## Lights that are not found
+
+Discovery uses multicast, which some networks (IGMP snooping, Wi-Fi multicast handling) drop,
+especially after a light rebooted. Enter the light's IP address under Configure > *Light addresses*;
+it is then asked directly.
+
 ## Custom segment effects
 
 Settings > Govee Local Plus > Configure. One JSON object, segments count from 0:

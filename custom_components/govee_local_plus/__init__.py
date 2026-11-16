@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import ipaddress
 from contextlib import suppress
 from errno import EADDRINUSE, EADDRNOTAVAIL, EMFILE, ENETDOWN, ENETUNREACH, ENOBUFS
 import logging
@@ -15,7 +16,13 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryError, ConfigEntryNotReady
 from homeassistant.helpers.event import async_track_time_interval
 
-from .const import CONF_CUSTOM_EFFECTS, DISCOVERY_TIMEOUT, DOMAIN, REBIND_INTERVAL
+from .const import (
+    CONF_CUSTOM_EFFECTS,
+    CONF_DEVICE_IPS,
+    DISCOVERY_TIMEOUT,
+    DOMAIN,
+    REBIND_INTERVAL,
+)
 from .coordinator import GoveeLocalPlusConfigEntry, GoveeLocalPlusCoordinator
 from .effects import EffectConfigError, parse_effects
 
@@ -27,6 +34,17 @@ TRANSIENT_BIND_ERRNOS = frozenset(
 )
 
 _LOGGER = logging.getLogger(__name__)
+
+
+def parse_device_ips(value: str | None) -> list[str]:
+    """Split a free-text list of IPv4 addresses; raise ValueError on a bad one."""
+    ips: list[str] = []
+    for part in (value or "").replace(";", ",").replace("\n", ",").replace(" ", ",").split(","):
+        part = part.strip()
+        if not part:
+            continue
+        ips.append(str(ipaddress.IPv4Address(part)))
+    return list(dict.fromkeys(ips))
 
 
 async def async_setup_entry(
@@ -51,6 +69,7 @@ async def async_setup_entry(
         config_entry=entry,
         listening_addresses=listening_addresses,
         effects=effects,
+        device_ips=parse_device_ips(entry.options.get(CONF_DEVICE_IPS)),
     )
 
     async def await_cleanup() -> None:
