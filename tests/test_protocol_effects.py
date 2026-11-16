@@ -9,7 +9,12 @@ from custom_components.govee_local_plus.effects import (
     EffectConfigError,
     Fill,
     SegmentEffect,
+    effects_to_raw,
+    format_segment_spec,
+    load_effects_json,
+    migrate_legacy_effects,
     parse_effects,
+    parse_segment_spec,
 )
 from custom_components.govee_local_plus.protocol import (
     finish_packet,
@@ -23,12 +28,12 @@ RED = (234, 51, 35)
 WARM = (252, 237, 198)
 
 STAIRS = {
-    "Signal-Rot": {"fills": [{"color": list(RED), "segments": [10, 11]}]},
+    "Signal-Rot": {"fills": [{"color": list(RED), "segments": [11, 12]}]},
     "Signal-Rot-Hell": {
         "background": list(WARM),
-        "fills": [{"color": list(RED), "segments": [10, 11]}],
+        "fills": [{"color": list(RED), "segments": [11, 12]}],
     },
-    "Grün-20": {"fills": [{"color": list(GREEN), "segments": [9, 10]}]},
+    "Grün-20": {"fills": [{"color": list(GREEN), "segments": [10, 11]}]},
 }
 
 
@@ -48,7 +53,7 @@ def test_segment_mask_bits():
 
 
 def test_gruen_20_matches_the_packets_seen_working():
-    effect = parse_effects(json.dumps(STAIRS))["Grün-20"]
+    effect = parse_effects(STAIRS)["Grün-20"]
     packets = effect.packets(12)
     assert [p.hex() for p in packets] == [
         "330515010000000000000000ff090000000000d4",  # background: black on 0-8, 11
@@ -57,7 +62,7 @@ def test_gruen_20_matches_the_packets_seen_working():
 
 
 def test_signal_rot_hell_paints_background_first():
-    packets = parse_effects(json.dumps(STAIRS))["Signal-Rot-Hell"].packets(12)
+    packets = parse_effects(STAIRS)["Signal-Rot-Hell"].packets(12)
     assert len(packets) == 2
     assert packets[0][4:7] == bytes(WARM)  # background colour comes first
     assert packets[1][4:7] == bytes(RED)
@@ -66,7 +71,7 @@ def test_signal_rot_hell_paints_background_first():
 
 
 def test_every_segment_is_painted_exactly_once():
-    for effect in parse_effects(json.dumps(STAIRS)).values():
+    for effect in parse_effects(STAIRS).values():
         painted: list[int] = []
         for packet in effect.packets(12):
             mask = packet[12:19]
@@ -84,7 +89,7 @@ def test_later_fill_wins_over_earlier():
 
 
 def test_effect_beyond_device_segments_is_rejected():
-    effect = parse_effects(json.dumps(STAIRS))["Signal-Rot"]
+    effect = parse_effects(STAIRS)["Signal-Rot"]
     with pytest.raises(EffectConfigError):
         effect.packets(10)
 
@@ -95,20 +100,78 @@ def test_effect_beyond_device_segments_is_rejected():
         "{not json",
         "[]",
         '{"a": 1}',
-        '{"a": {"fills": [{"color": [1,2], "segments": [0]}]}}',
-        '{"a": {"fills": [{"color": [1,2,300], "segments": [0]}]}}',
+        '{"a": {"fills": [{"color": [1,2], "segments": [1]}]}}',
+        '{"a": {"fills": [{"color": [1,2,300], "segments": [1]}]}}',
         '{"a": {"fills": [{"color": [1,2,3], "segments": ["x"]}]}}',
+        '{"a": {"fills": [{"color": [1,2,3], "segments": [0]}]}}',
+        '{"a": {"fills": [{"color": [1,2,3], "segments": [57]}]}}',
+        '{"a": {"fills": [{"color": [true,2,3], "segments": [1]}]}}',
         '{"a": {"background": "red"}}',
+        '{"none": {}}',
     ],
 )
 def test_invalid_effect_options(text):
     with pytest.raises(EffectConfigError):
-        parse_effects(text)
+        load_effects_json(text)
 
 
 def test_empty_option_means_no_effects():
     assert parse_effects(None) == {}
-    assert parse_effects("  ") == {}
+    assert parse_effects({}) == {}
+    assert load_effects_json("  ") == {}
+
+
+def test_segments_are_numbered_from_one():
+    effect = parse_effects({"x": {"fills": [{"color": [1, 2, 3], "segments": [1]}]}})["x"]
+    assert effect.fills[0].segments == (0,)  # internally 0-based
+
+
+def test_round_trip_is_stable():
+    raw = effects_to_raw(parse_effects(STAIRS))
+    assert effects_to_raw(parse_effects(raw)) == raw
+    assert raw["Grün-20"]["fills"][0]["segments"] == [10, 11]
+
+
+def test_legacy_v1_json_is_converted_from_zero_based():
+    legacy = json.dumps(
+        {"Grün-20": {"fills": [{"color": [117, 251, 76], "segments": [9, 10]}]}}
+    )
+    assert migrate_legacy_effects(legacy)["Grün-20"]["fills"][0]["segments"] == [10, 11]
+    # the converted effect paints exactly what the original did
+    new = parse_effects(migrate_legacy_effects(legacy))["Grün-20"].packets(12)
+    old = parse_effects(STAIRS)["Grün-20"].packets(12)
+    assert new == old
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        ("1-3, 7", [1, 2, 3, 7]),
+        ("7,1,2,3,3", [1, 2, 3, 7]),
+        ("2 – 4", [2, 3, 4]),
+        ("  ", []),
+        (None, []),
+    ],
+)
+def test_segment_spec(text, expected):
+    assert parse_segment_spec(text) == expected
+
+
+@pytest.mark.parametrize("text", ["0", "3-1", "a", "1-", "57", "1,,x"])
+def test_segment_spec_rejects(text):
+    with pytest.raises(EffectConfigError):
+        parse_segment_spec(text)
+
+
+def test_format_segment_spec_round_trip():
+    assert format_segment_spec([1, 2, 3, 7, 9, 10]) == "1-3, 7, 9-10"
+    assert parse_segment_spec(format_segment_spec([4, 5, 6, 12])) == [4, 5, 6, 12]
+
+
+def test_effect_fits_only_devices_with_enough_segments():
+    effect = parse_effects(STAIRS)["Signal-Rot"]  # uses segment 12
+    assert effect.fits(12)
+    assert not effect.fits(11)
 
 
 def test_parse_library_cleans_names_and_dedupes():

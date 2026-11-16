@@ -3,28 +3,103 @@
     "step": {
       "user": {
         "title": "Govee Local Plus",
-        "description": "Scans the LAN for Govee lights with LAN control enabled (Govee Home app > device settings). Port 4002/UDP must be free: stop the Govee to MQTT bridge first."
+        "description": "Searches your network for Govee lights. Everything stays local, no Govee account is needed.\n\nBefore you continue:\n1. Open the light in the Govee Home app > settings and switch on **LAN Control**. Not every model has it.\n2. Make sure nothing else listens on UDP port 4002 (the built-in *Govee Light Local* integration or the Govee to MQTT bridge). Only one program can.\n\nSelect **Submit** to start the search."
+      },
+      "manual": {
+        "title": "Enter the address of the light",
+        "description": "No light answered the search. That is common when multicast does not reach the lights (IGMP snooping, Wi-Fi multicast handling, other VLAN). Enter the IP address of your light instead, you find it in your router or in the Govee Home app under the device settings.\n\nIf it still is not found: check that LAN Control is on and that UDP 4001, 4002 and 4003 are allowed between Home Assistant and the light.",
+        "data": {
+          "device_ips": "IP addresses of the lights"
+        },
+        "data_description": {
+          "device_ips": "One address per entry, for example 192.168.1.50"
+        }
       }
+    },
+    "error": {
+      "invalid_ips": "Invalid IP address: {error}",
+      "cannot_connect": "No light answered at this address. Is LAN Control switched on and the address correct?"
     },
     "abort": {
       "single_instance_allowed": "Only one Govee Local Plus entry is needed, it covers every light.",
-      "no_devices_found": "No Govee light answered. Enable LAN control in the Govee Home app and check that nothing else holds UDP port 4002."
+      "port_in_use": "UDP port 4002 is already in use. Remove or stop the built-in Govee Light Local integration and the Govee to MQTT bridge, then try again."
     }
   },
   "options": {
     "step": {
       "init": {
-        "title": "Custom segment effects",
-        "description": "Static colour layouts that are painted locally, one JSON object. Segments are 0-based. Example: {example} Optional: IP addresses of the lights (comma separated). They are asked directly, which helps when multicast discovery does not reach them.",
+        "title": "Govee Local Plus",
+        "menu_options": {
+          "add_effect": "Add an effect",
+          "edit_effect": "Edit an effect",
+          "delete_effect": "Delete effects",
+          "addresses": "Light addresses",
+          "json": "Effects as JSON (advanced)"
+        }
+      },
+      "add_effect": {
+        "title": "New effect",
+        "description": "An effect is a fixed colour layout that is painted onto the segments of a light and then shows up in its effect list. {hint}\n\nGive it a name and a background colour for all segments that are not coloured below. Colour areas follow on the next page.",
         "data": {
-          "custom_effects": "Effects (JSON)",
-          "device_ips": "Light addresses (optional)"
+          "name": "Name",
+          "background": "Background"
+        }
+      },
+      "effect": {
+        "title": "Edit effect",
+        "description": "{hint}",
+        "data": {
+          "name": "Name",
+          "background": "Background"
+        }
+      },
+      "edit_effect": {
+        "title": "Edit an effect",
+        "data": {
+          "effect": "Effect"
+        }
+      },
+      "fill": {
+        "title": "Colour area of \"{effect}\"",
+        "description": "Choose a colour and the segments that get it. Segments are numbered from 1 like in the Govee Home app. Write single numbers and ranges, for example `1-3, 7`. {hint}\n\nTick **Add another colour area** for more. When editing, leave the segments empty to remove this area.",
+        "data": {
+          "color": "Colour",
+          "segments": "Segments",
+          "add_another": "Add another colour area"
+        }
+      },
+      "delete_effect": {
+        "title": "Delete effects",
+        "data": {
+          "effects": "Effects to delete"
+        }
+      },
+      "addresses": {
+        "title": "Light addresses",
+        "description": "Optional. Lights with an address listed here are asked directly instead of waiting for the multicast search. Use this when a light is not found automatically.",
+        "data": {
+          "device_ips": "IP addresses of the lights"
+        }
+      },
+      "json": {
+        "title": "Effects as JSON",
+        "description": "All effects in one place, handy for backups and sharing. Segments are numbered from 1. {error}",
+        "data": {
+          "effects_json": "Effects"
         }
       }
     },
     "error": {
       "invalid_effects": "Invalid effects: {error}",
-      "invalid_ips": "Invalid IP address: {error}"
+      "invalid_ips": "Invalid IP address: {error}",
+      "invalid_segments": "Invalid segments: {error}",
+      "name_required": "Please enter a name.",
+      "name_reserved": "This name is reserved.",
+      "name_exists": "An effect with this name exists already."
+    },
+    "abort": {
+      "no_fills": "The effect has no coloured segments and was not saved.",
+      "invalid_effect": "The effect could not be saved."
     }
   },
   "entity": {
@@ -39,7 +114,7 @@
       "message": "Could not listen for Govee devices: {error}"
     },
     "no_devices_found": {
-      "message": "No Govee light found on the network"
+      "message": "No Govee light found on the network. Enter its IP address under Configure > Light addresses."
     },
     "no_listening_addresses": {
       "message": "No enabled network adapter has an IPv4 address to listen on"

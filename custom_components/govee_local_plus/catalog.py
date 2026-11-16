@@ -82,6 +82,11 @@ class SceneCatalog:
         self._hass = hass
         self._scenes: dict[str, list[LibraryScene]] = {}
 
+    @property
+    def counts(self) -> dict[str, int]:
+        """Return the number of loaded scenes per SKU."""
+        return {sku: len(scenes) for sku, scenes in self._scenes.items()}
+
     async def async_get(self, sku: str) -> list[LibraryScene]:
         """Return the scenes of a SKU (memory, then disk, then network)."""
         if sku in self._scenes:

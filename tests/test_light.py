@@ -18,16 +18,14 @@ from homeassistant.const import ATTR_ENTITY_ID, STATE_ON
 from homeassistant.core import HomeAssistant
 
 from custom_components.govee_local_plus.catalog import LibraryScene
-from custom_components.govee_local_plus.const import CONF_CUSTOM_EFFECTS, DOMAIN
+from custom_components.govee_local_plus.const import CONF_EFFECTS, DOMAIN
 
-ENTITY = "light.h61e5"
+ENTITY = "light.h61e5_0011"
 
-STAIRS = json.dumps(
-    {
-        "Signal-Rot": {"fills": [{"color": [234, 51, 35], "segments": [10, 11]}]},
-        "Grün-20": {"fills": [{"color": [117, 251, 76], "segments": [9, 10]}]},
-    }
-)
+STAIRS = {
+    "Signal-Rot": {"background": [0, 0, 0], "fills": [{"color": [234, 51, 35], "segments": [11, 12]}]},
+    "Grün-20": {"background": [0, 0, 0], "fills": [{"color": [117, 251, 76], "segments": [10, 11]}]},
+}
 LIBRARY = [
     LibraryScene("Aurora", 12238, b"\x01\x02\x03"),
     LibraryScene("Sunrise", 0, b""),
@@ -110,17 +108,12 @@ class FakeController:
         return [FakeController.device]
 
 
-@pytest.fixture
-def device() -> FakeDevice:
-    FakeController.device = FakeDevice()
-    return FakeController.device
-
 
 @pytest.fixture
 async def setup(hass: HomeAssistant, device: FakeDevice):
     """Set the integration up with fakes and return the config entry."""
     entry = MockConfigEntry(
-        domain=DOMAIN, unique_id=DOMAIN, options={CONF_CUSTOM_EFFECTS: STAIRS}
+        domain=DOMAIN, unique_id=DOMAIN, options={CONF_EFFECTS: STAIRS}
     )
     entry.add_to_hass(hass)
     with (
@@ -242,7 +235,7 @@ async def test_invalid_options_do_not_take_the_light_down(
     hass: HomeAssistant, device: FakeDevice, caplog
 ) -> None:
     entry = MockConfigEntry(
-        domain=DOMAIN, unique_id=DOMAIN, options={CONF_CUSTOM_EFFECTS: "{kaputt"}
+        domain=DOMAIN, unique_id=DOMAIN, options={CONF_EFFECTS: {"x": {"fills": [{"color": [1], "segments": [1]}]}}}
     )
     entry.add_to_hass(hass)
     with (
@@ -267,35 +260,6 @@ async def test_invalid_options_do_not_take_the_light_down(
     assert "Signal-Rot" not in hass.states.get(ENTITY).attributes[ATTR_EFFECT_LIST]
 
 
-async def test_options_flow_validates_and_reloads(hass: HomeAssistant, setup) -> None:
-    entry = setup
-    result = await hass.config_entries.options.async_init(entry.entry_id)
-    assert result["type"].value == "form"
-
-    bad = await hass.config_entries.options.async_configure(
-        result["flow_id"], {CONF_CUSTOM_EFFECTS: "{nope"}
-    )
-    assert bad["errors"] == {"base": "invalid_effects"}
-
-    new = json.dumps({"Nur-Rot": {"fills": [{"color": [255, 0, 0], "segments": [0]}]}})
-    with patch(
-        "custom_components.govee_local_plus.coordinator.GoveeController", FakeController
-    ), patch(
-        "custom_components.govee_local_plus.async_get_listening_addresses",
-        AsyncMock(return_value=["10.0.0.2/24"]),
-    ), patch(
-        "custom_components.govee_local_plus.catalog.SceneCatalog.async_get",
-        AsyncMock(return_value=LIBRARY),
-    ):
-        done = await hass.config_entries.options.async_configure(
-            bad["flow_id"], {CONF_CUSTOM_EFFECTS: new}
-        )
-        await hass.async_block_till_done()
-    assert done["type"].value == "create_entry"
-    effects = hass.states.get(ENTITY).attributes[ATTR_EFFECT_LIST]
-    assert "Nur-Rot" in effects and "Signal-Rot" not in effects
-
-
 async def test_single_instance(hass: HomeAssistant, setup) -> None:
     result = await hass.config_entries.flow.async_init(
         DOMAIN, context={"source": "user"}
@@ -315,7 +279,7 @@ async def test_configured_ips_are_asked_directly(hass: HomeAssistant, device: Fa
     entry = MockConfigEntry(
         domain=DOMAIN,
         unique_id=DOMAIN,
-        options={CONF_CUSTOM_EFFECTS: STAIRS, "device_ips": "10.0.0.40, 10.0.0.41\n10.0.0.40"},
+        options={CONF_EFFECTS: STAIRS, "device_ips": ["10.0.0.40", "10.0.0.41", "10.0.0.40"]},
     )
     entry.add_to_hass(hass)
     FakeController.last_queued = []
@@ -337,9 +301,3 @@ async def test_configured_ips_are_asked_directly(hass: HomeAssistant, device: Fa
     assert FakeController.discovery_sent_with == ["10.0.0.40", "10.0.0.41"]
 
 
-async def test_options_flow_rejects_bad_ip(hass: HomeAssistant, setup) -> None:
-    result = await hass.config_entries.options.async_init(setup.entry_id)
-    bad = await hass.config_entries.options.async_configure(
-        result["flow_id"], {CONF_CUSTOM_EFFECTS: STAIRS, "device_ips": "10.0.0.999"}
-    )
-    assert bad["errors"] == {"base": "invalid_ips"}

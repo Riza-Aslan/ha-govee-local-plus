@@ -8,7 +8,7 @@ from datetime import datetime
 import logging
 from typing import override
 
-from govee_local_api import GoveeController, GoveeDevice
+from govee_local_api import GoveeController, GoveeDevice, GoveeLightFeatures
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
@@ -156,6 +156,27 @@ class GoveeLocalPlusCoordinator(DataUpdateCoordinator[list[GoveeDevice]]):
             if index:
                 await asyncio.sleep(PACKET_GAP)
             await device.send_raw_command(packet.hex())
+
+    @property
+    def bind_summary(self) -> dict[str, list[str]]:
+        """Return the addresses bound and the ones that failed (for diagnostics)."""
+        return {
+            "listening": list(self._controller.listening_addresses),
+            "failed": [address for address, _ in self._controller.bind_failures],
+        }
+
+    @property
+    def max_segments(self) -> int:
+        """Return the largest segment count of the known lights, 0 if none has any."""
+        return max(
+            (
+                device.capabilities.segments_count
+                for device in self.devices
+                if device.capabilities
+                and GoveeLightFeatures.SEGMENT_CONTROL & device.capabilities.features
+            ),
+            default=0,
+        )
 
     @property
     def devices(self) -> list[GoveeDevice]:

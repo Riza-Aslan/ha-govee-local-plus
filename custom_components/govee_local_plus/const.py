@@ -11,8 +11,12 @@ CONF_LISTENING_PORT_DEFAULT = 4002
 CONF_COMMAND_PORT = 4003
 CONF_DISCOVERY_INTERVAL_DEFAULT = 60
 
-CONF_CUSTOM_EFFECTS = "custom_effects"
+CONF_EFFECTS = "effects"
 CONF_DEVICE_IPS = "device_ips"
+# v1 stored the effects as JSON text with 0-based segments; only the migration reads it.
+CONF_CUSTOM_EFFECTS = "custom_effects"
+# Largest segment count in the device library; used when no light is known yet.
+DEFAULT_MAX_SEGMENTS = 15
 
 SCAN_INTERVAL = timedelta(seconds=30)
 # A device is considered unavailable if we have not heard a status response

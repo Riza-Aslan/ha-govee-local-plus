@@ -3,52 +3,127 @@
     "step": {
       "user": {
         "title": "Govee Local Plus",
-        "description": "Sucht im LAN nach Govee-Lampen mit aktivierter LAN-Steuerung (Govee Home App > Geräteeinstellungen). Port 4002/UDP muss frei sein: vorher die Govee-to-MQTT-Bridge stoppen."
+        "description": "Sucht im Netzwerk nach Govee-Lampen. Alles bleibt lokal, ein Govee-Konto brauchst du nicht.\n\nBevor du weitermachst:\n1. Öffne die Lampe in der Govee-Home-App > Einstellungen und schalte **LAN-Steuerung** ein. Nicht jedes Modell hat sie.\n2. Stelle sicher, dass nichts anderes auf UDP-Port 4002 lauscht (die eingebaute Integration *Govee Light Local* oder die Govee-to-MQTT-Bridge). Das kann immer nur ein Programm.\n\nMit **Absenden** startet die Suche."
+      },
+      "manual": {
+        "title": "Adresse der Lampe eingeben",
+        "description": "Auf die Suche hat keine Lampe geantwortet. Das passiert oft, wenn Multicast die Lampen nicht erreicht (IGMP-Snooping, WLAN-Multicast-Behandlung, anderes VLAN). Gib stattdessen die IP-Adresse deiner Lampe ein. Du findest sie im Router oder in der Govee-Home-App in den Geräteeinstellungen.\n\nWird sie trotzdem nicht gefunden: Prüfe, ob die LAN-Steuerung an ist und ob UDP 4001, 4002 und 4003 zwischen Home Assistant und der Lampe erlaubt sind.",
+        "data": {
+          "device_ips": "IP-Adressen der Lampen"
+        },
+        "data_description": {
+          "device_ips": "Eine Adresse pro Eintrag, zum Beispiel 192.168.1.50"
+        }
       }
     },
+    "error": {
+      "invalid_ips": "Ungültige IP-Adresse: {error}",
+      "cannot_connect": "Unter dieser Adresse hat keine Lampe geantwortet. Ist die LAN-Steuerung an und die Adresse richtig?"
+    },
     "abort": {
-      "single_instance_allowed": "Ein Eintrag genügt, er deckt alle Lampen ab.",
-      "no_devices_found": "Keine Govee-Lampe hat geantwortet. LAN-Steuerung in der Govee Home App aktivieren und prüfen, ob UDP-Port 4002 frei ist."
+      "single_instance_allowed": "Ein Eintrag Govee Local Plus genügt, er deckt alle Lampen ab.",
+      "port_in_use": "UDP-Port 4002 ist schon belegt. Entferne oder stoppe die eingebaute Integration Govee Light Local und die Govee-to-MQTT-Bridge und versuche es dann erneut."
     }
   },
   "options": {
     "step": {
       "init": {
-        "title": "Eigene Segment-Effekte",
-        "description": "Feste Farbbilder, die lokal gemalt werden, ein JSON-Objekt. Segmente zählen ab 0. Beispiel: {example} Optional: IP-Adressen der Lampen (kommagetrennt). Sie werden direkt angefragt, das hilft, wenn die Multicast-Suche sie nicht erreicht.",
+        "title": "Govee Local Plus",
+        "menu_options": {
+          "add_effect": "Effekt hinzufügen",
+          "edit_effect": "Effekt bearbeiten",
+          "delete_effect": "Effekte löschen",
+          "addresses": "Adressen der Lampen",
+          "json": "Effekte als JSON (fortgeschritten)"
+        }
+      },
+      "add_effect": {
+        "title": "Neuer Effekt",
+        "description": "Ein Effekt ist ein festes Farbmuster, das auf die Segmente einer Lampe gemalt wird und danach in ihrer Effektliste erscheint. {hint}\n\nGib ihm einen Namen und eine Hintergrundfarbe für alle Segmente, die unten keine eigene Farbe bekommen. Die Farbbereiche folgen auf der nächsten Seite.",
         "data": {
-          "custom_effects": "Effekte (JSON)",
-          "device_ips": "Adressen der Lampen (optional)"
+          "name": "Name",
+          "background": "Hintergrund"
+        }
+      },
+      "effect": {
+        "title": "Effekt bearbeiten",
+        "description": "{hint}",
+        "data": {
+          "name": "Name",
+          "background": "Hintergrund"
+        }
+      },
+      "edit_effect": {
+        "title": "Effekt bearbeiten",
+        "data": {
+          "effect": "Effekt"
+        }
+      },
+      "fill": {
+        "title": "Farbbereich von \"{effect}\"",
+        "description": "Wähle eine Farbe und die Segmente, die sie bekommen. Die Segmente sind ab 1 nummeriert wie in der Govee-Home-App. Schreibe einzelne Zahlen und Bereiche, zum Beispiel `1-3, 7`. {hint}\n\nMit **Weiteren Farbbereich hinzufügen** kommen mehr dazu. Beim Bearbeiten entfernst du einen Bereich, indem du die Segmente leer lässt.",
+        "data": {
+          "color": "Farbe",
+          "segments": "Segmente",
+          "add_another": "Weiteren Farbbereich hinzufügen"
+        }
+      },
+      "delete_effect": {
+        "title": "Effekte löschen",
+        "data": {
+          "effects": "Zu löschende Effekte"
+        }
+      },
+      "addresses": {
+        "title": "Adressen der Lampen",
+        "description": "Optional. Lampen mit einer Adresse in dieser Liste werden direkt angefragt, statt auf die Multicast-Suche zu warten. Nutze das, wenn eine Lampe nicht automatisch gefunden wird.",
+        "data": {
+          "device_ips": "IP-Adressen der Lampen"
+        }
+      },
+      "json": {
+        "title": "Effekte als JSON",
+        "description": "Alle Effekte an einem Ort, praktisch für Sicherungen und zum Weitergeben. Die Segmente sind ab 1 nummeriert. {error}",
+        "data": {
+          "effects_json": "Effekte"
         }
       }
     },
     "error": {
       "invalid_effects": "Ungültige Effekte: {error}",
-      "invalid_ips": "Ungültige IP-Adresse: {error}"
+      "invalid_ips": "Ungültige IP-Adresse: {error}",
+      "invalid_segments": "Ungültige Segmente: {error}",
+      "name_required": "Bitte einen Namen eingeben.",
+      "name_reserved": "Dieser Name ist reserviert.",
+      "name_exists": "Ein Effekt mit diesem Namen gibt es schon."
+    },
+    "abort": {
+      "no_fills": "Der Effekt hat keine gefärbten Segmente und wurde nicht gespeichert.",
+      "invalid_effect": "Der Effekt konnte nicht gespeichert werden."
     }
   },
   "entity": {
     "light": {
       "govee_light": {
-        "name": "Licht"
+        "name": "Lampe"
       }
     }
   },
   "exceptions": {
     "bind_failed": {
-      "message": "Konnte nicht auf Govee-Geräte lauschen: {error}"
+      "message": "Auf Govee-Geräte konnte nicht gelauscht werden: {error}"
     },
     "no_devices_found": {
-      "message": "Keine Govee-Lampe im Netzwerk gefunden"
+      "message": "Keine Govee-Lampe im Netzwerk gefunden. Trage ihre IP-Adresse unter Konfigurieren > Adressen der Lampen ein."
     },
     "no_listening_addresses": {
-      "message": "Kein aktiver Netzwerkadapter mit IPv4-Adresse"
+      "message": "Kein aktiver Netzwerkadapter hat eine IPv4-Adresse zum Lauschen"
     },
     "no_live_endpoints": {
       "message": "Alle Netzwerk-Listener verloren, lade neu"
     },
     "port_in_use": {
-      "message": "Port {port} ist bereits belegt (Govee-to-MQTT-Bridge oder die eingebaute Govee-Integration?)"
+      "message": "Port {port} ist schon belegt (Govee-to-MQTT-Bridge oder die eingebaute Govee-Integration?)"
     }
   }
 }

@@ -101,7 +101,18 @@ class GoveeLight(CoordinatorEntity[GoveeLocalPlusCoordinator], LightEntity):
 
         # Effects: custom layouts first, then the library, then the few
         # built-in scenes as a fallback when the library is not reachable.
-        self._custom = dict(coordinator.effects) if self._segment_count else {}
+        self._custom = {
+            name: effect
+            for name, effect in coordinator.effects.items()
+            if self._segment_count and effect.fits(self._segment_count)
+        }
+        for name in coordinator.effects.keys() - self._custom.keys():
+            _LOGGER.debug(
+                "Effect %r does not fit %s (%d segments), not offered",
+                name,
+                device.sku,
+                self._segment_count,
+            )
         self._library = {s.name: s for s in library}
         self._builtin = (
             [
@@ -123,7 +134,7 @@ class GoveeLight(CoordinatorEntity[GoveeLocalPlusCoordinator], LightEntity):
 
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, device.fingerprint)},
-            name=device.sku,
+            name=f"{device.sku} {device.fingerprint.replace(':', '')[-4:]}",
             manufacturer=MANUFACTURER,
             model_id=device.sku,
             serial_number=device.fingerprint,
