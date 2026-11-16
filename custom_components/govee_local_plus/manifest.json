@@ -12,12 +12,12 @@
   "integration_type": "hub",
   "iot_class": "local_push",
   "issue_tracker": "https://github.com/Riza-Aslan/ha-govee-local-plus/issues",
+  "loggers": [
+    "govee_local_api"
+  ],
   "requirements": [
     "govee-local-api>=3.3.1"
   ],
-  "version": "0.2.0",
   "single_config_entry": true,
-  "loggers": [
-    "govee_local_api"
-  ]
+  "version": "0.2.0"
 }
