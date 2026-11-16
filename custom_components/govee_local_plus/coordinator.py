@@ -93,6 +93,10 @@ class GoveeLocalPlusCoordinator(DataUpdateCoordinator[list[GoveeDevice]]):
         # multicast handling); lights with a known address are asked directly.
         for ip in self._device_ips:
             self._controller.add_device_to_discovery_queue(ip)
+        if self._device_ips:
+            # The library only walks its queue on the next tick (60 s), which is
+            # longer than setup waits for the first light: ask right now.
+            self._controller.send_discovery_message()
         self._controller.send_update_message()
         log_bound_addresses(self._controller)
 

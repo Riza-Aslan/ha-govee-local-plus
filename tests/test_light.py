@@ -73,6 +73,7 @@ class FakeController:
 
     device = FakeDevice()
     last_queued: list[str] = []
+    discovery_sent_with: list[str] | None = None
 
     def __init__(self, **kwargs) -> None:
         self.protocols = [object()]
@@ -81,6 +82,9 @@ class FakeController:
         self.networks = ["10.0.0.0/24"]
         self.callback = None
         self.queued: list[str] = []
+
+    def send_discovery_message(self) -> None:
+        FakeController.discovery_sent_with = list(self.queued)
 
     def add_device_to_discovery_queue(self, ip: str) -> bool:
         self.queued.append(ip)
@@ -329,6 +333,8 @@ async def test_configured_ips_are_asked_directly(hass: HomeAssistant, device: Fa
         assert await hass.config_entries.async_setup(entry.entry_id)
         await hass.async_block_till_done()
     assert FakeController.last_queued == ["10.0.0.40", "10.0.0.41"]
+    # ... and probed immediately, not only on the library's next 60 s tick
+    assert FakeController.discovery_sent_with == ["10.0.0.40", "10.0.0.41"]
 
 
 async def test_options_flow_rejects_bad_ip(hass: HomeAssistant, setup) -> None:
